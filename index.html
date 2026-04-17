@@ -1623,6 +1623,9 @@
             scrollbar-color: var(--primary) rgba(10, 15, 31, 0.5);
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -1959,6 +1962,43 @@
     </div>
 
     <script>
+        // ═══ Firebase Configuration ═══════════════════════════
+        // ИНСТРУКЦИИ ЗА НАСТРОЙКА:
+        // 1. Отиди на https://console.firebase.google.com/ и създай нов проект
+        // 2. В Authentication → Sign-in method → включи Email/Password
+        // 3. В Firestore Database → създай база данни (Start in test mode)
+        // 4. В Project Settings → копирай конфигурацията тук долу
+        // 5. В Firestore → Rules, сложи правилата от коментара по-долу
+        //
+        // Firestore Rules (копирай ги в Firestore → Rules):
+        // rules_version = '2';
+        // service cloud.firestore {
+        //   match /databases/{database}/documents {
+        //     match /users/{userId} {
+        //       allow read: if request.auth != null;
+        //       allow create: if request.auth != null;
+        //       allow update: if request.auth != null && resource.data.uid == request.auth.uid;
+        //     }
+        //   }
+        // }
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQ7qaI-tFPg0_dAUGCUzCPxyjTIHO6GVg",
+            authDomain: "snake-cbaae.firebaseapp.com",
+            projectId: "snake-cbaae",
+            storageBucket: "snake-cbaae.firebasestorage.app",
+            messagingSenderId: "311105308286",
+            appId: "1:311105308286:web:a50fe1a8e605407694fa2f"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const firebaseAuth = firebase.auth();
+        const firebaseDb = firebase.firestore();
+
+        function usernameToEmail(username) {
+            const hex = Array.from(new TextEncoder().encode(username.toLowerCase()))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+            return 'u' + hex + '@snakegame.app';
+        }
+
         // Constants
         const GRID_SIZE = 20;
         const CANVAS_SIZE = 300;
@@ -2137,7 +2177,7 @@
                 authLogin: 'ВЛЕЗ',
                 authRegister: 'РЕГИСТРИРАЙ',
                 authErrShortName: 'Името трябва да е поне 2 символа.',
-                authErrShortPass: 'Паролата трябва да е поне 4 символа.',
+                authErrShortPass: 'Паролата трябва да е поне 6 символа.',
                 authErrExists: 'Това потребителско име вече съществува.',
                 authErrWrong: 'Грешно потребителско име или парола.',
                 authSuccess: 'Регистрацията е успешна! Влизаш...',
@@ -2203,7 +2243,7 @@
                 authLogin: 'LOGIN',
                 authRegister: 'REGISTER',
                 authErrShortName: 'Username must be at least 2 characters.',
-                authErrShortPass: 'Password must be at least 4 characters.',
+                authErrShortPass: 'Password must be at least 6 characters.',
                 authErrExists: 'This username already exists.',
                 authErrWrong: 'Wrong username or password.',
                 authSuccess: 'Registered successfully! Logging in...',
@@ -2744,24 +2784,34 @@
 
         function saveCurrentUserData() {
             if (!currentUser) return;
-            const accounts = JSON.parse(localStorage.getItem('snakeAccounts') || '{}');
-            if (!accounts[currentUser]) return;
-            accounts[currentUser].highScores = highScores;
-            accounts[currentUser].globalStats = globalStats;
-            accounts[currentUser].settings = settings;
-            localStorage.setItem('snakeAccounts', JSON.stringify(accounts));
+            const bestScore = Math.max(
+                highScores.easy.score, highScores.medium.score,
+                highScores.hard.score, highScores.extreme.score
+            );
+            const data = {
+                highScores: highScores,
+                globalStats: globalStats,
+                settings: settings,
+                bestScore: bestScore,
+                totalApples: globalStats.totalApples
+            };
+            firebaseDb.collection('users').doc(currentUser.toLowerCase()).set(data, { merge: true }).catch(console.error);
         }
 
-        function loadCurrentUserData() {
+        async function loadCurrentUserData() {
             if (!currentUser) return;
-            const accounts = JSON.parse(localStorage.getItem('snakeAccounts') || '{}');
-            const userData = accounts[currentUser];
-            if (!userData) return;
-            if (userData.highScores) highScores = userData.highScores;
-            if (userData.globalStats) globalStats = userData.globalStats;
-            if (userData.settings) {
-                settings = userData.settings;
-                applyLoadedSettings();
+            try {
+                const doc = await firebaseDb.collection('users').doc(currentUser.toLowerCase()).get();
+                if (!doc.exists) return;
+                const data = doc.data();
+                if (data.highScores) highScores = data.highScores;
+                if (data.globalStats) globalStats = data.globalStats;
+                if (data.settings) {
+                    settings = data.settings;
+                    applyLoadedSettings();
+                }
+            } catch (err) {
+                console.error('Failed to load user data:', err);
             }
         }
 
@@ -3332,12 +3382,6 @@
 
         // ── Account / Auth ────────────────────────────────────
 
-        async function hashPassword(password) {
-            const msgBuffer = new TextEncoder().encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
         function switchAuthTab(tab) {
             const t = TRANSLATIONS[settings.language || 'bg'];
             document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
@@ -3354,44 +3398,53 @@
             const password = document.getElementById('authPassword').value;
             const msgEl = document.getElementById('authMessage');
             const t = TRANSLATIONS[settings.language || 'bg'];
+            const email = usernameToEmail(username);
 
             if (!username || username.length < 2) {
                 msgEl.className = 'auth-error';
                 msgEl.textContent = t.authErrShortName || 'Името трябва да е поне 2 символа.';
                 return;
             }
-            if (!password || password.length < 4) {
+            if (!password || password.length < 6) {
                 msgEl.className = 'auth-error';
-                msgEl.textContent = t.authErrShortPass || 'Паролата трябва да е поне 4 символа.';
+                msgEl.textContent = t.authErrShortPass || 'Паролата трябва да е поне 6 символа.';
                 return;
             }
 
-            const accounts = JSON.parse(localStorage.getItem('snakeAccounts') || '{}');
-            const hashed = await hashPassword(password);
-
-            if (tab === 'register') {
-                if (accounts[username]) {
-                    msgEl.className = 'auth-error';
+            try {
+                if (tab === 'register') {
+                    const existingDoc = await firebaseDb.collection('users').doc(username.toLowerCase()).get();
+                    if (existingDoc.exists) {
+                        msgEl.className = 'auth-error';
+                        msgEl.textContent = t.authErrExists || 'Това потребителско име вече съществува.';
+                        return;
+                    }
+                    const cred = await firebaseAuth.createUserWithEmailAndPassword(email, password);
+                    await firebaseDb.collection('users').doc(username.toLowerCase()).set({
+                        username: username,
+                        uid: cred.user.uid,
+                        highScores: { easy:{score:0,level:0}, medium:{score:0,level:0}, hard:{score:0,level:0}, extreme:{score:0,level:0} },
+                        globalStats: { totalApples:0, totalGames:0, totalLevels:0 },
+                        settings: { ...settings },
+                        bestScore: 0,
+                        totalApples: 0
+                    });
+                    msgEl.className = 'auth-success';
+                    msgEl.textContent = t.authSuccess || 'Регистрацията е успешна! Влизаш...';
+                    setTimeout(() => loginUser(username), 800);
+                } else {
+                    await firebaseAuth.signInWithEmailAndPassword(email, password);
+                    loginUser(username);
+                }
+            } catch (err) {
+                msgEl.className = 'auth-error';
+                if (err.code === 'auth/email-already-in-use') {
                     msgEl.textContent = t.authErrExists || 'Това потребителско име вече съществува.';
-                    return;
-                }
-                accounts[username] = {
-                    passwordHash: hashed,
-                    highScores: { easy:{score:0,level:0}, medium:{score:0,level:0}, hard:{score:0,level:0}, extreme:{score:0,level:0} },
-                    globalStats: { totalApples:0, totalGames:0, totalLevels:0 },
-                    settings: { ...settings }
-                };
-                localStorage.setItem('snakeAccounts', JSON.stringify(accounts));
-                msgEl.className = 'auth-success';
-                msgEl.textContent = t.authSuccess || 'Регистрацията е успешна! Влизаш...';
-                setTimeout(() => loginUser(username), 800);
-            } else {
-                if (!accounts[username] || accounts[username].passwordHash !== hashed) {
-                    msgEl.className = 'auth-error';
+                } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
                     msgEl.textContent = t.authErrWrong || 'Грешно потребителско име или парола.';
-                    return;
+                } else {
+                    msgEl.textContent = err.message;
                 }
-                loginUser(username);
             }
         }
 
@@ -3402,20 +3455,25 @@
             document.getElementById('ltLb').classList.toggle('active',  tab === 'lb');
         }
 
-        function updateLeaderboard() {
-            const accounts = JSON.parse(localStorage.getItem('snakeAccounts') || '{}');
+        async function updateLeaderboard() {
             const t = TRANSLATIONS[settings.language || 'bg'];
-            const players = Object.entries(accounts).map(([name, data]) => {
-                const hs = data.highScores || {};
-                const bestScore = Math.max(
-                    (hs.easy   || {score:0}).score,
-                    (hs.medium || {score:0}).score,
-                    (hs.hard   || {score:0}).score,
-                    (hs.extreme|| {score:0}).score
-                );
-                const apples = (data.globalStats || {}).totalApples || 0;
-                return { name, bestScore, apples };
-            }).sort((a, b) => b.bestScore - a.bestScore);
+            let players = [];
+            try {
+                const snapshot = await firebaseDb.collection('users')
+                    .orderBy('bestScore', 'desc')
+                    .limit(8)
+                    .get();
+                players = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        name: data.username || doc.id,
+                        bestScore: data.bestScore || 0,
+                        apples: data.totalApples || 0
+                    };
+                });
+            } catch (err) {
+                console.error('Leaderboard error:', err);
+            }
 
             const count = players.length;
             const playerWord = settings.language === 'en'
@@ -3435,7 +3493,7 @@
             const medals = ['🥇','🥈','🥉'];
             const rankClasses = ['lb-rank-gold','lb-rank-silver','lb-rank-bronze'];
 
-            players.slice(0, 8).forEach((p, i) => {
+            players.forEach((p, i) => {
                 const isMe = p.name === currentUser;
                 const rankHtml = i < 3
                     ? `<span class="lb-rank ${rankClasses[i]}">${medals[i]}</span>`
@@ -3449,7 +3507,6 @@
                 container.appendChild(row);
             });
 
-            // Update leaderboard tab button with current user's rank
             const myRank = players.findIndex(p => p.name === currentUser);
             const ltLb = document.getElementById('ltLb');
             if (ltLb) {
@@ -3467,10 +3524,10 @@
             }
         }
 
-        function loginUser(username) {
+        async function loginUser(username) {
             currentUser = username;
             localStorage.setItem('snakeCurrentUser', username);
-            loadCurrentUserData();
+            await loadCurrentUserData();
             updateHighScoreDisplay();
             applyLanguage();
             updateLeaderboard();
@@ -3480,9 +3537,9 @@
         }
 
         function logout() {
+            firebaseAuth.signOut();
             currentUser = null;
             localStorage.removeItem('snakeCurrentUser');
-            // Reset to defaults
             highScores = { easy:{score:0,level:0}, medium:{score:0,level:0}, hard:{score:0,level:0}, extreme:{score:0,level:0} };
             globalStats = { totalApples:0, totalGames:0, totalLevels:0 };
             document.getElementById('landingMenu').style.display = 'none';
@@ -3494,17 +3551,29 @@
         }
 
         function initAuth() {
-            const savedUser = localStorage.getItem('snakeCurrentUser');
-            if (savedUser) {
-                const accounts = JSON.parse(localStorage.getItem('snakeAccounts') || '{}');
-                if (accounts[savedUser]) {
-                    loginUser(savedUser);
-                    return;
+            firebaseAuth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    let username = localStorage.getItem('snakeCurrentUser');
+                    if (!username) {
+                        try {
+                            const snapshot = await firebaseDb.collection('users')
+                                .where('uid', '==', user.uid).limit(1).get();
+                            if (!snapshot.empty) {
+                                username = snapshot.docs[0].data().username;
+                            }
+                        } catch (e) { console.error(e); }
+                    }
+                    if (username) {
+                        await loginUser(username);
+                    } else {
+                        document.getElementById('authScreen').style.display = 'flex';
+                        document.getElementById('landingMenu').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('authScreen').style.display = 'flex';
+                    document.getElementById('landingMenu').style.display = 'none';
                 }
-            }
-            // Show auth screen
-            document.getElementById('authScreen').style.display = 'flex';
-            document.getElementById('landingMenu').style.display = 'none';
+            });
         }
 
         // Allow Enter key in auth inputs
