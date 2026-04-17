@@ -143,32 +143,42 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             margin: 12px auto 4px;
             user-select: none;
         }
 
         .dpad-row {
             display: flex;
-            gap: 4px;
+            gap: 2px;
         }
 
         .dpad-btn {
-            width: 56px;
-            height: 56px;
-            font-size: 1.4em;
+            width: 80px;
+            height: 80px;
+            font-size: 1.8em;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 14px;
+            border-radius: 18px;
             border: 1px solid rgba(var(--primary-rgb), 0.4);
             background: rgba(var(--primary-rgb), 0.08);
             color: var(--primary);
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
-            transition: background 0.1s;
+            transition: background 0.08s;
+            position: relative;
+        }
+
+        .dpad-btn::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
         }
 
         .dpad-btn:active {
@@ -177,8 +187,8 @@
         }
 
         .dpad-center {
-            width: 56px;
-            height: 56px;
+            width: 80px;
+            height: 80px;
         }
 
         @media (hover: none) and (pointer: coarse) {
@@ -1617,6 +1627,127 @@
             box-shadow: 0 0 25px rgba(var(--primary-rgb), 1);
         }
 
+        /* ── Mode Menu ── */
+        #modeMenu {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #04060f;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #modeMenu::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(var(--primary-rgb),0.12) 0%, transparent 65%);
+            top: -200px; left: -200px;
+            animation: floatOrb 10s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .mode-content {
+            background: rgba(255,255,255,0.025);
+            padding: 45px 50px 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(var(--primary-rgb),0.18);
+            text-align: center;
+            box-shadow: 0 8px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 1;
+            width: 460px;
+            max-width: 95vw;
+            animation: menuAppear 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .mode-title {
+            font-size: 2.2em;
+            font-weight: 900;
+            letter-spacing: 6px;
+            background: linear-gradient(90deg, #fff 0%, var(--primary) 50%, #fff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleShimmer 4s linear infinite;
+            margin-bottom: 5px;
+        }
+        .mode-subtitle {
+            font-size: 0.7em;
+            color: rgba(var(--primary-rgb), 0.5);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+        .mode-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .mode-card {
+            display: flex;
+            align-items: center;
+            padding: 20px 22px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease, background 0.25s ease, border-color 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            text-align: left;
+            animation: cardSlideIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        .mode-card:nth-child(1) { animation-delay: 0.12s; --mc: var(--primary); }
+        .mode-card:nth-child(2) { animation-delay: 0.22s; --mc: #00ccff; }
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: var(--mc);
+            border-radius: 16px 0 0 16px;
+            transition: width 0.25s ease;
+        }
+        .mode-card:hover {
+            transform: translateX(10px) scale(1.025);
+            border-color: var(--mc);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 22px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.06);
+        }
+        .mode-card:hover::before { width: 7px; }
+        .mode-card:active { transform: translateX(4px) scale(0.98); }
+        .mode-card-icon {
+            font-size: 2.2em;
+            width: 56px; height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px;
+            margin-right: 18px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .mode-card-body { flex: 1; }
+        .mode-card-name {
+            font-size: 1.1em;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .mode-card-desc {
+            font-size: 0.68em;
+            color: rgba(255,255,255,0.38);
+            letter-spacing: 1px;
+        }
+
         /* Firefox Scrollbar */
         * {
             scrollbar-width: thin;
@@ -1747,9 +1878,39 @@
                         <span class="lb-title" id="lbTitle">🏆 КЛАСАЦИЯ</span>
                         <span class="lb-player-count" id="lbPlayerCount">👥 0 играча</span>
                     </div>
+                    <div style="display:flex;gap:6px;margin-bottom:10px;">
+                        <button class="landing-tab active" id="lbTabClassic" onclick="switchLbTab('classic')" style="flex:1;padding:8px 6px;font-size:0.65em;">🧱 КЛАСИК</button>
+                        <button class="landing-tab" id="lbTabFree" onclick="switchLbTab('freeRoam')" style="flex:1;padding:8px 6px;font-size:0.65em;">🌀 СВОБОДЕН</button>
+                    </div>
                     <div id="lbRows"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Mode Selection Menu -->
+    <div id="modeMenu">
+        <div class="mode-content">
+            <div class="mode-title" id="modeMenuTitle">РЕЖИМ</div>
+            <div class="mode-subtitle" id="modeMenuSub">Избери режим на игра</div>
+            <div class="menu-divider"></div>
+            <div class="mode-cards">
+                <div class="mode-card" onclick="selectMode('classic')">
+                    <div class="mode-card-icon">🧱</div>
+                    <div class="mode-card-body">
+                        <div class="mode-card-name" id="modeClassicName">Класик</div>
+                        <div class="mode-card-desc" id="modeClassicDesc">Удариш ли стена — край на играта</div>
+                    </div>
+                </div>
+                <div class="mode-card" onclick="selectMode('freeRoam')">
+                    <div class="mode-card-icon">🌀</div>
+                    <div class="mode-card-body">
+                        <div class="mode-card-name" id="modeFreeRoamName">Свободен</div>
+                        <div class="mode-card-desc" id="modeFreeRoamDesc">Минаваш през стените от другата страна</div>
+                    </div>
+                </div>
+            </div>
+            <button class="menu-footer-btn" onclick="backToLandingFromMode()" id="modeBackBtn">← Назад</button>
         </div>
     </div>
 
@@ -1903,6 +2064,10 @@
                     <span class="stat-label">Ниво</span>
                     <span class="stat-value" id="finalLevel">1</span>
                 </div>
+                <div class="stat-row" id="finalSnakeLengthRow" style="display:none">
+                    <span class="stat-label" id="finalSnakeLengthLabel">Дължина на змията</span>
+                    <span class="stat-value" id="finalSnakeLength">3</span>
+                </div>
             </div>
             <div id="highScoreInfo" style="margin-bottom:14px; font-size:0.8em; color:var(--accent); letter-spacing:1px;"></div>
             <button class="modal-back-btn" onclick="goToMenu()">← Назад в менюто</button>
@@ -1936,6 +2101,11 @@
                     <span class="stats-card-icon">🏅</span>
                     <span class="stats-card-value" id="statBestScore">0</span>
                     <span class="stats-card-label" id="statBestLabel">Най-висок резултат</span>
+                </div>
+                <div class="stats-card">
+                    <span class="stats-card-icon">🐍</span>
+                    <span class="stats-card-value" id="statBestSnakeLength">0</span>
+                    <span class="stats-card-label" id="statSnakeLengthLabel">Най-дълга змия</span>
                 </div>
             </div>
             <div class="stats-hs-section">
@@ -2045,6 +2215,9 @@
 
         // Current difficulty
         let currentDifficulty = DIFFICULTIES.medium;
+
+        // Game Mode: 'classic' or 'freeRoam'
+        let currentGameMode = 'classic';
 
         // Skin definitions
         const SKINS = {
@@ -2164,6 +2337,13 @@
                 landingStats: '📊\u00a0 СТАТИСТИКА',
                 landingSettings: '⚙️\u00a0 НАСТРОЙКИ',
                 diffBackBtn: '← Назад',
+                modeTitle: 'РЕЖИМ',
+                modeSub: 'Избери режим на игра',
+                modeClassic: 'Класик',
+                modeClassicDesc: 'Удариш ли стена — край на играта',
+                modeFreeRoam: 'Свободен',
+                modeFreeRoamDesc: 'Минаваш през стените от другата страна',
+                modeBackBtn: '← Назад',
                 statsTitle: 'СТАТИСТИКА',
                 statsSub: 'Твоят напредък',
                 statApples: 'Общо ябълки',
@@ -2174,6 +2354,11 @@
                 statsClose: '← НАЗАД',
                 lbTitle: '🏆 КЛАСАЦИЯ',
                 lbEmpty: 'Все още няма резултати',
+                lbClassic: '🧱 КЛАСИК',
+                lbFreeRoam: '🌀 СВОБОДЕН',
+                lbSnakeLength: 'Дълж. змия',
+                statSnakeLength: 'Най-дълга змия',
+                goSnakeLength: 'Дължина на змията',
                 authLogin: 'ВЛЕЗ',
                 authRegister: 'РЕГИСТРИРАЙ',
                 authErrShortName: 'Името трябва да е поне 2 символа.',
@@ -2230,6 +2415,13 @@
                 landingStats: '📊\u00a0 STATISTICS',
                 landingSettings: '⚙️\u00a0 SETTINGS',
                 diffBackBtn: '← Back',
+                modeTitle: 'MODE',
+                modeSub: 'Choose game mode',
+                modeClassic: 'Classic',
+                modeClassicDesc: 'Hit a wall and it\'s game over',
+                modeFreeRoam: 'Free Roam',
+                modeFreeRoamDesc: 'Pass through walls to the other side',
+                modeBackBtn: '← Back',
                 statsTitle: 'STATISTICS',
                 statsSub: 'Your progress',
                 statApples: 'Total apples',
@@ -2240,6 +2432,11 @@
                 statsClose: '← BACK',
                 lbTitle: '🏆 LEADERBOARD',
                 lbEmpty: 'No results yet',
+                lbClassic: '🧱 CLASSIC',
+                lbFreeRoam: '🌀 FREE ROAM',
+                lbSnakeLength: 'Snake length',
+                statSnakeLength: 'Longest snake',
+                goSnakeLength: 'Snake length',
                 authLogin: 'LOGIN',
                 authRegister: 'REGISTER',
                 authErrShortName: 'Username must be at least 2 characters.',
@@ -2330,7 +2527,8 @@
         let globalStats = {
             totalApples: 0,
             totalGames: 0,
-            totalLevels: 0
+            totalLevels: 0,
+            bestSnakeLength: 0
         };
 
         // Game State
@@ -2497,19 +2695,31 @@
         // Go back to landing (home)
         function backToLanding() {
             document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('landingMenu').style.display = 'flex';
+            document.getElementById('modeMenu').style.display = 'flex';
         }
 
-        // Open difficulty selection from landing
+        // Open mode selection from landing
         function openDifficultyMenu() {
             document.getElementById('landingMenu').style.display = 'none';
+            document.getElementById('modeMenu').style.display = 'flex';
+        }
+
+        function selectMode(mode) {
+            currentGameMode = mode;
+            document.getElementById('modeMenu').style.display = 'none';
             document.getElementById('mainMenu').style.display = 'flex';
+        }
+
+        function backToLandingFromMode() {
+            document.getElementById('modeMenu').style.display = 'none';
+            document.getElementById('landingMenu').style.display = 'flex';
         }
 
         // Go back to menu (after game over / from game)
         function goToMenu() {
             gameState.running = false;
             document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('modeMenu').style.display = 'none';
             document.getElementById('skinMenu').style.display = 'none';
             document.getElementById('gameOverModal').style.display = 'none';
             document.getElementById('landingMenu').style.display = 'flex';
@@ -2544,6 +2754,7 @@
                 highScores.hard.score, highScores.extreme.score
             );
             document.getElementById('statBestScore').textContent = best;
+            document.getElementById('statBestSnakeLength').textContent = globalStats.bestSnakeLength || 0;
             document.getElementById('statsHsEasy').textContent = highScores.easy.score;
             document.getElementById('statsHsMedium').textContent = highScores.medium.score;
             document.getElementById('statsHsHard').textContent = highScores.hard.score;
@@ -2555,6 +2766,7 @@
             document.getElementById('statGamesLabel').textContent = t.statGames || 'Общо игри';
             document.getElementById('statAvgLabel').textContent = t.statAvg || 'Средно ниво';
             document.getElementById('statBestLabel').textContent = t.statBest || 'Най-висок резултат';
+            document.getElementById('statSnakeLengthLabel').textContent = t.statSnakeLength || 'Най-дълга змия';
             document.getElementById('statsHsTitle').textContent = t.statsHsTitle || 'Рекорди по трудност';
             document.getElementById('statsHsDiffEasy').textContent = t.diffEasy || 'Лесно';
             document.getElementById('statsHsDiffMedium').textContent = t.diffMedium || 'Средно';
@@ -2670,6 +2882,15 @@
             document.querySelector('.menu-subtitle').textContent = t.menuSubtitle;
             document.querySelector('.menu-footer-btn').innerHTML = t.settingsBtn;
             document.getElementById('diffBackBtn').textContent = t.diffBackBtn;
+
+            // Mode menu
+            document.getElementById('modeMenuTitle').textContent = t.modeTitle || 'РЕЖИМ';
+            document.getElementById('modeMenuSub').textContent = t.modeSub || 'Избери режим на игра';
+            document.getElementById('modeClassicName').textContent = t.modeClassic || 'Класик';
+            document.getElementById('modeClassicDesc').textContent = t.modeClassicDesc || 'Удариш ли стена — край на играта';
+            document.getElementById('modeFreeRoamName').textContent = t.modeFreeRoam || 'Свободен';
+            document.getElementById('modeFreeRoamDesc').textContent = t.modeFreeRoamDesc || 'Минаваш през стените от другата страна';
+            document.getElementById('modeBackBtn').textContent = t.modeBackBtn || '← Назад';
             const diffNames = [t.diffEasy, t.diffMedium, t.diffHard, t.diffExtreme];
             const diffSpeeds = [t.diffSpeedEasy, t.diffSpeedMedium, t.diffSpeedHard, t.diffSpeedExtreme];
             document.querySelectorAll('.diff-card-name').forEach((el, i) => el.textContent = diffNames[i]);
@@ -2793,7 +3014,8 @@
                 globalStats: globalStats,
                 settings: settings,
                 bestScore: bestScore,
-                totalApples: globalStats.totalApples
+                totalApples: globalStats.totalApples,
+                bestSnakeLength: globalStats.bestSnakeLength || 0
             };
             firebaseDb.collection('users').doc(currentUser.toLowerCase()).set(data, { merge: true }).catch(console.error);
         }
@@ -2977,10 +3199,18 @@
             };
 
             // Check wall collision
-            if (newHead.x < 0 || newHead.x >= CANVAS_SIZE / GRID_SIZE ||
-                newHead.y < 0 || newHead.y >= CANVAS_SIZE / GRID_SIZE) {
-                endGame();
-                return;
+            const maxCell = CANVAS_SIZE / GRID_SIZE;
+            if (currentGameMode === 'freeRoam') {
+                if (newHead.x < 0) newHead.x = maxCell - 1;
+                else if (newHead.x >= maxCell) newHead.x = 0;
+                if (newHead.y < 0) newHead.y = maxCell - 1;
+                else if (newHead.y >= maxCell) newHead.y = 0;
+            } else {
+                if (newHead.x < 0 || newHead.x >= maxCell ||
+                    newHead.y < 0 || newHead.y >= maxCell) {
+                    endGame();
+                    return;
+                }
             }
 
             // Check self collision
@@ -3078,10 +3308,15 @@
             gameState.paused = false;
             startBtn.textContent = tEnd.startBtn;
             
+            const snakeLength = snake.segments.length;
+            
             // Track global statistics
             globalStats.totalApples += gameState.foodEaten + (gameState.level - 1) * 5;
             globalStats.totalGames++;
             globalStats.totalLevels += gameState.level;
+            if (snakeLength > (globalStats.bestSnakeLength || 0)) {
+                globalStats.bestSnakeLength = snakeLength;
+            }
             saveGlobalStats();
             updateLeaderboard();
             playGameOverSound();
@@ -3092,6 +3327,14 @@
             
             finalScoreDisplay.textContent = gameState.score;
             finalLevelDisplay.textContent = gameState.level;
+            
+            // Show snake length
+            const snakeLengthRow = document.getElementById('finalSnakeLengthRow');
+            const snakeLengthLabel = document.getElementById('finalSnakeLengthLabel');
+            const snakeLengthVal = document.getElementById('finalSnakeLength');
+            snakeLengthRow.style.display = 'flex';
+            snakeLengthLabel.textContent = tEnd.goSnakeLength || 'Дължина на змията';
+            snakeLengthVal.textContent = snakeLength;
             
             // Display high score info
             const highScoreInfo = document.getElementById('highScoreInfo');
@@ -3418,10 +3661,11 @@
                         username: username,
                         uid: cred.user.uid,
                         highScores: { easy:{score:0,level:0}, medium:{score:0,level:0}, hard:{score:0,level:0}, extreme:{score:0,level:0} },
-                        globalStats: { totalApples:0, totalGames:0, totalLevels:0 },
+                        globalStats: { totalApples:0, totalGames:0, totalLevels:0, bestSnakeLength:0 },
                         settings: { ...settings },
                         bestScore: 0,
-                        totalApples: 0
+                        totalApples: 0,
+                        bestSnakeLength: 0
                     });
                     msgEl.className = 'auth-success';
                     msgEl.textContent = t.authSuccess || 'Регистрацията е успешна! Влизаш...';
@@ -3449,12 +3693,26 @@
             document.getElementById('ltLb').classList.toggle('active',  tab === 'lb');
         }
 
+        let currentLbTab = 'classic';
+
+        function switchLbTab(tab) {
+            currentLbTab = tab;
+            const t = TRANSLATIONS[settings.language || 'bg'];
+            document.getElementById('lbTabClassic').classList.toggle('active', tab === 'classic');
+            document.getElementById('lbTabFree').classList.toggle('active', tab === 'freeRoam');
+            document.getElementById('lbTabClassic').textContent = t.lbClassic || '🧱 КЛАСИК';
+            document.getElementById('lbTabFree').textContent = t.lbFreeRoam || '🌀 СВОБОДЕН';
+            updateLeaderboard();
+        }
+
         async function updateLeaderboard() {
             const t = TRANSLATIONS[settings.language || 'bg'];
             let players = [];
+            const isFreeRoam = currentLbTab === 'freeRoam';
+            const orderField = isFreeRoam ? 'bestSnakeLength' : 'bestScore';
             try {
                 const snapshot = await firebaseDb.collection('users')
-                    .orderBy('bestScore', 'desc')
+                    .orderBy(orderField, 'desc')
                     .limit(8)
                     .get();
                 players = snapshot.docs.map(doc => {
@@ -3462,6 +3720,7 @@
                     return {
                         name: data.username || doc.id,
                         bestScore: data.bestScore || 0,
+                        bestSnakeLength: data.bestSnakeLength || 0,
                         apples: data.totalApples || 0
                     };
                 });
@@ -3494,10 +3753,18 @@
                     : `<span class="lb-rank lb-rank-other">${i + 1}.</span>`;
                 const row = document.createElement('div');
                 row.className = 'lb-row' + (isMe ? ' lb-me' : '');
-                row.innerHTML = `${rankHtml}
-                    <span class="lb-name ${isMe ? 'lb-name-me' : ''}">${p.name}${isMe ? ' ◀' : ''}</span>
-                    <span class="lb-apples">🍎${p.apples}</span>
-                    <span class="lb-score">${p.bestScore}</span>`;
+                if (isFreeRoam) {
+                    const lengthLabel = t.lbSnakeLength || 'Дълж. змия';
+                    row.innerHTML = `${rankHtml}
+                        <span class="lb-name ${isMe ? 'lb-name-me' : ''}">${p.name}${isMe ? ' ◀' : ''}</span>
+                        <span class="lb-apples">🐍${p.bestSnakeLength}</span>
+                        <span class="lb-score">${p.bestSnakeLength}</span>`;
+                } else {
+                    row.innerHTML = `${rankHtml}
+                        <span class="lb-name ${isMe ? 'lb-name-me' : ''}">${p.name}${isMe ? ' ◀' : ''}</span>
+                        <span class="lb-apples">🍎${p.apples}</span>
+                        <span class="lb-score">${p.bestScore}</span>`;
+                }
                 container.appendChild(row);
             });
 
@@ -3535,7 +3802,7 @@
             currentUser = null;
             localStorage.removeItem('snakeCurrentUser');
             highScores = { easy:{score:0,level:0}, medium:{score:0,level:0}, hard:{score:0,level:0}, extreme:{score:0,level:0} };
-            globalStats = { totalApples:0, totalGames:0, totalLevels:0 };
+            globalStats = { totalApples:0, totalGames:0, totalLevels:0, bestSnakeLength:0 };
             document.getElementById('landingMenu').style.display = 'none';
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('authUsername').value = '';
