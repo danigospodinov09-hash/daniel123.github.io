@@ -3413,12 +3413,6 @@
 
             try {
                 if (tab === 'register') {
-                    const existingDoc = await firebaseDb.collection('users').doc(username.toLowerCase()).get();
-                    if (existingDoc.exists) {
-                        msgEl.className = 'auth-error';
-                        msgEl.textContent = t.authErrExists || 'Това потребителско име вече съществува.';
-                        return;
-                    }
                     const cred = await firebaseAuth.createUserWithEmailAndPassword(email, password);
                     await firebaseDb.collection('users').doc(username.toLowerCase()).set({
                         username: username,
